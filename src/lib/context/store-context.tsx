@@ -107,9 +107,9 @@ export const StoreProvider = ({ children }: StoreProps) => {
     )
   }
 
-  const ensureRegion = (region: Region, countryCode?: string | null) => {
+  const ensureRegion = (region: Region) => {
     if (!IS_SERVER) {
-      const { regionId, countryCode: defaultCountryCode  } = getRegion() || {
+      const { regionId, countryCode } = getRegion() || {
         regionId: region.id,
         countryCode: region.countries[0].iso_2,
       }
@@ -144,36 +144,36 @@ export const StoreProvider = ({ children }: StoreProps) => {
 
   const createNewCart = async (regionId?: string) => {
     const cartData: {
-      region_id?: string,
+      region_id?: string
       sales_channel_id?: string
     } = { region_id: regionId }
 
     if (process.env.NEXT_PUBLIC_SALES_CHANNEL_ID) {
       //check if customer is b2b
-      const { data } = await axios.get(`${MEDUSA_BACKEND_URL}/store/customers/is-b2b`, {
-        withCredentials: true
-      })
+      const { data } = await axios.get(
+        `${MEDUSA_BACKEND_URL}/store/customers/is-b2b`,
+        {
+          withCredentials: true,
+        }
+      )
 
       if (data.is_b2b) {
         cartData.sales_channel_id = process.env.NEXT_PUBLIC_SALES_CHANNEL_ID
       }
     }
 
-    await createCart.mutateAsync(
-      cartData,
-      {
-        onSuccess: ({ cart }) => {
-          setCart(cart)
-          storeCart(cart.id)
-          ensureRegion(cart.region)
-        },
-        onError: (error) => {
-          if (process.env.NODE_ENV === "development") {
-            console.error(error)
-          }
-        },
-      }
-    )
+    await createCart.mutateAsync(cartData, {
+      onSuccess: ({ cart }) => {
+        setCart(cart)
+        storeCart(cart.id)
+        ensureRegion(cart.region)
+      },
+      onError: (error) => {
+        if (process.env.NODE_ENV === "development") {
+          console.error(error)
+        }
+      },
+    })
   }
 
   const resetCart = async () => {
@@ -182,36 +182,36 @@ export const StoreProvider = ({ children }: StoreProps) => {
     const savedRegion = getRegion()
 
     const cartData: {
-      region_id?: string,
+      region_id?: string
       sales_channel_id?: string
     } = { region_id: savedRegion?.regionId }
 
     if (process.env.NEXT_PUBLIC_SALES_CHANNEL_ID) {
       //check if customer is b2b
-      const { data } = await axios.get(`${MEDUSA_BACKEND_URL}/store/customers/is-b2b`, {
-        withCredentials: true
-      })
+      const { data } = await axios.get(
+        `${MEDUSA_BACKEND_URL}/store/customers/is-b2b`,
+        {
+          withCredentials: true,
+        }
+      )
 
       if (data.is_b2b) {
         cartData.sales_channel_id = process.env.NEXT_PUBLIC_SALES_CHANNEL_ID
       }
     }
 
-    createCart.mutate(
-      cartData,
-      {
-        onSuccess: ({ cart }) => {
-          setCart(cart)
-          storeCart(cart.id)
-          ensureRegion(cart.region)
-        },
-        onError: (error) => {
-          if (process.env.NODE_ENV === "development") {
-            console.error(error)
-          }
-        },
-      }
-    )
+    createCart.mutate(cartData, {
+      onSuccess: ({ cart }) => {
+        setCart(cart)
+        storeCart(cart.id)
+        ensureRegion(cart.region)
+      },
+      onError: (error) => {
+        if (process.env.NODE_ENV === "development") {
+          console.error(error)
+        }
+      },
+    })
   }
 
   useEffect(() => {
@@ -223,15 +223,21 @@ export const StoreProvider = ({ children }: StoreProps) => {
         const cartRes = await medusaClient.carts
           .retrieve(cartId)
           .then(async ({ cart }) => {
-            if (process.env.NEXT_PUBLIC_SALES_CHANNEL_ID && cart.sales_channel_id !== process.env.NEXT_PUBLIC_SALES_CHANNEL_ID) {
+            if (
+              process.env.NEXT_PUBLIC_SALES_CHANNEL_ID &&
+              cart.sales_channel_id !== process.env.NEXT_PUBLIC_SALES_CHANNEL_ID
+            ) {
               //check if b2b customer
-              const { data } = await axios.get(`${MEDUSA_BACKEND_URL}/store/customers/is-b2b`, {
-                withCredentials: true
-              })
+              const { data } = await axios.get(
+                `${MEDUSA_BACKEND_URL}/store/customers/is-b2b`,
+                {
+                  withCredentials: true,
+                }
+              )
               if (data.is_b2b) {
                 //update cart's sales channel
                 const response = await medusaClient.carts.update(cart.id, {
-                  sales_channel_id: process.env.NEXT_PUBLIC_SALES_CHANNEL_ID
+                  sales_channel_id: process.env.NEXT_PUBLIC_SALES_CHANNEL_ID,
                 })
 
                 return response.cart
